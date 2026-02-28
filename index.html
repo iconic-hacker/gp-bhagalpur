@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Face Recognition Project</title>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#050c10;
+  --bg2:#0a1520;
+  --bg3:#0f1e2e;
+  --cyan:#00e5ff;
+  --green:#00ff88;
+  --text:#e0f0ff;
+  --muted:#5a8a9f;
+  --border:rgba(0,229,255,0.15);
+  --glow:0 0 20px rgba(0,229,255,0.3);
+  --glow2:0 0 40px rgba(0,229,255,0.15);
+}
+html{scroll-behavior:smooth;}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;cursor:none;}
+.cursor{position:fixed;width:10px;height:10px;background:var(--cyan);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:width 0.2s,height 0.2s;mix-blend-mode:screen;}
+.cursor-ring{position:fixed;width:32px;height:32px;border:1px solid rgba(0,229,255,0.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:left 0.08s,top 0.08s,width 0.3s,height 0.3s;}
+#particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1.2rem 5rem;background:rgba(5,12,16,0.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+.nav-logo{font-family:'Fira Code',monospace;font-size:0.95rem;color:var(--cyan);}
+.nav-logo span{color:var(--green);}
+.nav-links{display:flex;gap:2.5rem;list-style:none;}
+.nav-links a{font-family:'Fira Code',monospace;font-size:0.78rem;color:var(--muted);text-decoration:none;letter-spacing:0.08em;transition:color 0.2s;}
+.nav-links a:hover{color:var(--cyan);}
+.hero{position:relative;z-index:1;min-height:100vh;display:flex;align-items:center;padding:8rem 5rem 4rem;gap:4rem;}
+.hero-left{flex:1;}
+.hero-tag{font-family:'Fira Code',monospace;font-size:0.78rem;color:var(--green);letter-spacing:0.1em;margin-bottom:1.5rem;min-height:1.2em;}
+.blink{animation:blink 1s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
+h1{font-size:clamp(3rem,5.5vw,5rem);font-weight:800;line-height:1.05;letter-spacing:-0.03em;margin-bottom:1.5rem;}
+h1 .line1{color:var(--text);}
+h1 .line2{color:transparent;-webkit-text-stroke:1.5px var(--cyan);}
+h1 .line3{background:linear-gradient(90deg,var(--cyan),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero-desc{font-family:'Fira Code',monospace;font-size:0.85rem;color:var(--muted);line-height:2;max-width:480px;margin-bottom:2.5rem;border-left:2px solid var(--cyan);padding-left:1.2rem;}
+.hero-desc span{color:var(--green);}
+.hero-buttons{display:flex;gap:1rem;flex-wrap:wrap;}
+.btn{padding:0.75rem 1.8rem;font-family:'Fira Code',monospace;font-size:0.8rem;letter-spacing:0.08em;border-radius:4px;cursor:pointer;text-decoration:none;transition:all 0.25s;}
+.btn-primary{background:transparent;border:1px solid var(--cyan);color:var(--cyan);box-shadow:var(--glow);}
+.btn-primary:hover{background:var(--cyan);color:var(--bg);box-shadow:0 0 30px rgba(0,229,255,0.5);}
+.btn-secondary{background:transparent;border:1px solid rgba(255,255,255,0.15);color:var(--muted);}
+.btn-secondary:hover{border-color:var(--green);color:var(--green);}
+.hero-right{flex:0 0 360px;display:flex;justify-content:center;}
+.scan-container{position:relative;width:300px;height:380px;}
+.scan-frame{width:100%;height:100%;background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;box-shadow:var(--glow2),inset 0 0 60px rgba(0,229,255,0.03);}
+.corner{position:absolute;width:20px;height:20px;border-color:var(--cyan);border-style:solid;}
+.c-tl{top:12px;left:12px;border-width:2px 0 0 2px;}
+.c-tr{top:12px;right:12px;border-width:2px 2px 0 0;}
+.c-bl{bottom:12px;left:12px;border-width:0 0 2px 2px;}
+.c-br{bottom:12px;right:12px;border-width:0 2px 2px 0;}
+.scanline{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);top:10%;animation:scan 3s ease-in-out infinite;}
+@keyframes scan{0%,100%{top:10%;opacity:0;}5%{opacity:1;}50%{top:88%;}95%{opacity:1;}}
+.hud-top{position:absolute;top:16px;left:50%;transform:translateX(-50%);font-family:'Fira Code',monospace;font-size:0.58rem;color:var(--cyan);letter-spacing:0.1em;opacity:0.7;white-space:nowrap;}
+.hud-bottom{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-family:'Fira Code',monospace;font-size:0.58rem;color:var(--green);letter-spacing:0.06em;white-space:nowrap;animation:pulse 2s ease-in-out infinite;}
+.conf-bar{position:absolute;bottom:34px;left:20px;right:20px;height:2px;background:rgba(0,229,255,0.1);border-radius:1px;}
+.conf-fill{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));animation:cfill 3s ease-in-out infinite;box-shadow:0 0 6px var(--cyan);}
+@keyframes cfill{0%,100%{width:0;}60%{width:94%;}80%{width:94%;}90%{width:0;}}
+@keyframes pulse{50%{opacity:0.4;}}
+.stats-bar{position:relative;z-index:1;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg2);}
+.stat{padding:2rem;text-align:center;border-right:1px solid var(--border);transition:background 0.2s;}
+.stat:last-child{border-right:none;}
+.stat:hover{background:rgba(0,229,255,0.04);}
+.stat-num{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--cyan),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:0.4rem;}
+.stat-label{font-family:'Fira Code',monospace;font-size:0.65rem;color:var(--muted);letter-spacing:0.1em;}
+section{position:relative;z-index:1;padding:6rem 5rem;}
+.sec-eyebrow{font-family:'Fira Code',monospace;font-size:0.72rem;color:var(--cyan);letter-spacing:0.15em;margin-bottom:1rem;display:flex;align-items:center;gap:0.8rem;}
+.sec-eyebrow::after{content:'';flex:0 0 40px;height:1px;background:var(--cyan);}
+h2{font-size:clamp(1.8rem,3vw,2.6rem);font-weight:700;margin-bottom:0.5rem;line-height:1.15;}
+h2 span{color:var(--cyan);}
+.sec-sub{font-family:'Fira Code',monospace;font-size:0.8rem;color:var(--muted);margin-bottom:3rem;}
+/* OVERVIEW */
+.overview-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:4rem;align-items:start;}
+.overview-body p{font-family:'Fira Code',monospace;font-size:0.82rem;color:rgba(224,240,255,0.65);line-height:2;margin-bottom:1rem;}
+.info-block{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin-top:1.5rem;font-family:'Fira Code',monospace;font-size:0.75rem;}
+.info-title{color:var(--cyan);margin-bottom:1rem;letter-spacing:0.05em;}
+.info-row{display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.info-row:last-child{border-bottom:none;}
+.info-key{color:var(--muted);}
+.info-val{color:var(--text);}
+.objectives{display:flex;flex-direction:column;gap:0.9rem;}
+.obj-card{background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--cyan);border-radius:0 8px 8px 0;padding:1.2rem 1.5rem;transition:background 0.2s,box-shadow 0.2s;}
+.obj-card:hover{background:rgba(0,229,255,0.05);box-shadow:var(--glow);}
+.obj-card h4{font-size:0.88rem;margin-bottom:0.3rem;}
+.obj-card p{font-family:'Fira Code',monospace;font-size:0.75rem;color:var(--muted);line-height:1.6;}
+/* TECH */
+.tech-section{background:var(--bg2);}
+.tech-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;}
+.tech-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1.8rem 1.5rem;text-align:center;position:relative;overflow:hidden;transition:transform 0.25s,box-shadow 0.25s,border-color 0.25s;}
+.tech-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0;transition:opacity 0.3s;}
+.tech-card:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(0,0,0,0.4),var(--glow);border-color:rgba(0,229,255,0.4);}
+.tech-card:hover::before{opacity:1;}
+.tech-icon{font-size:2rem;margin-bottom:1rem;}
+.tech-card h3{font-size:0.95rem;font-weight:700;margin-bottom:0.4rem;}
+.tech-card p{font-family:'Fira Code',monospace;font-size:0.7rem;color:var(--muted);line-height:1.6;}
+.tech-tag{display:inline-block;margin-top:0.8rem;padding:0.2rem 0.7rem;background:rgba(0,229,255,0.1);color:var(--cyan);border:1px solid rgba(0,229,255,0.2);border-radius:2px;font-family:'Fira Code',monospace;font-size:0.62rem;letter-spacing:0.08em;}
+/* PIPELINE */
+.pipeline-section{background:var(--bg);}
+.pipeline{display:flex;gap:0;position:relative;}
+.pipeline::before{content:'';position:absolute;top:32px;left:24px;right:24px;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);opacity:0.25;}
+.pipe-step{flex:1;padding:2rem 1rem;background:var(--bg2);border:1px solid var(--border);border-right:none;position:relative;transition:background 0.2s;text-align:center;}
+.pipe-step:first-child{border-radius:8px 0 0 8px;}
+.pipe-step:last-child{border-right:1px solid var(--border);border-radius:0 8px 8px 0;}
+.pipe-step:hover{background:rgba(0,229,255,0.05);}
+.pipe-num{width:40px;height:40px;border:1px solid var(--cyan);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fira Code',monospace;font-size:0.72rem;color:var(--cyan);margin:0 auto 1rem;background:var(--bg);position:relative;z-index:1;box-shadow:0 0 12px rgba(0,229,255,0.2);}
+.pipe-step h4{font-size:0.82rem;font-weight:700;margin-bottom:0.4rem;}
+.pipe-step p{font-family:'Fira Code',monospace;font-size:0.67rem;color:var(--muted);line-height:1.5;}
+/* FEATURES */
+.features-section{background:var(--bg2);}
+.features-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;}
+.feat-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:2rem;transition:border-color 0.25s,box-shadow 0.25s;position:relative;overflow:hidden;}
+.feat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent);opacity:0;transition:opacity 0.3s;}
+.feat-card:hover{border-color:rgba(0,255,136,0.3);box-shadow:0 0 30px rgba(0,255,136,0.07);}
+.feat-card:hover::after{opacity:1;}
+.feat-num{font-family:'Fira Code',monospace;font-size:0.62rem;color:var(--green);letter-spacing:0.1em;margin-bottom:0.8rem;}
+.feat-card h4{font-size:0.95rem;font-weight:700;margin-bottom:0.5rem;}
+.feat-card p{font-family:'Fira Code',monospace;font-size:0.75rem;color:var(--muted);line-height:1.7;}
+/* OUTCOMES */
+.outcomes-section{background:var(--bg);}
+.outcomes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;}
+.outcome-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:2.5rem 2rem;text-align:center;transition:transform 0.25s,box-shadow 0.25s;}
+.outcome-card:hover{transform:translateY(-8px);box-shadow:0 30px 60px rgba(0,0,0,0.5),var(--glow);}
+.outcome-glyph{font-size:2.2rem;margin-bottom:1.2rem;filter:drop-shadow(0 0 8px rgba(0,229,255,0.4));}
+.outcome-card h3{font-size:0.95rem;font-weight:700;margin-bottom:0.6rem;}
+.outcome-card p{font-family:'Fira Code',monospace;font-size:0.75rem;color:var(--muted);line-height:1.7;}
+footer{position:relative;z-index:1;background:var(--bg2);border-top:1px solid var(--border);padding:3rem 5rem;display:flex;justify-content:space-between;align-items:center;}
+.footer-logo{font-family:'Fira Code',monospace;font-size:1rem;color:var(--cyan);}
+.footer-logo span{color:var(--green);}
+footer p{font-family:'Fira Code',monospace;font-size:0.72rem;color:var(--muted);}
+.reveal{opacity:0;transform:translateY(28px);transition:opacity 0.7s ease,transform 0.7s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.d1{transition-delay:0.1s;}.d2{transition-delay:0.2s;}.d3{transition-delay:0.3s;}
+@media(max-width:900px){
+  nav{padding:1rem 1.5rem;} .nav-links{display:none;}
+  .hero{flex-direction:column;padding:7rem 1.5rem 3rem;} .hero-right{display:none;}
+  section{padding:4rem 1.5rem;}
+  .overview-grid,.features-grid,.outcomes-grid,.tech-grid{grid-template-columns:1fr;}
+  .pipeline{flex-direction:column;}
+  .pipe-step{border-right:1px solid var(--border);border-bottom:none;border-radius:0;}
+  .pipe-step:first-child{border-radius:8px 8px 0 0;}
+  .pipe-step:last-child{border-radius:0 0 8px 8px;border-bottom:1px solid var(--border);}
+  .stats-bar{grid-template-columns:repeat(2,1fr);}
+  footer{flex-direction:column;gap:1rem;text-align:center;padding:2rem 1.5rem;}
+}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<nav>
+  <a href="http://wwww.facerecongition.in/" target="_blank" style="text-decoration:none;"><div class="nav-logo">&lt;<span>FaceRecog</span>/&gt;</div></a>
+  <ul class="nav-links">
+    <li><a href="#overview">overview</a></li>
+    <li><a href="#tech">tech</a></li>
+    <li><a href="#pipeline">pipeline</a></li>
+    <li><a href="#features">features</a></li>
+    <li><a href="#outcomes">outcomes</a></li>
+  </ul>
+</nav>
+
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-tag" id="heroTag"></div>
+    <h1>
+      <div class="line1">Real-Time</div>
+      <div class="line2">Face</div>
+      <div class="line3">Recognition</div>
+    </h1>
+    <p class="hero-desc">
+      &gt; detecting human faces in live video streams<br>
+      &gt; powered by Python + OpenCV + Haar Cascade<br>
+      &gt; CNN deep learning for advanced recognition<br>
+      &gt; status: <span>operational ✓</span>
+    </p>
+    <div class="hero-buttons">
+      <a href="#overview" class="btn btn-primary">[ explore project ]</a>
+      <a href="#tech" class="btn btn-secondary">[ view tech stack ]</a>
+      <a href="http://wwww.facerecongition.in/" target="_blank" class="btn" style="background:transparent;border:1px solid var(--green);color:var(--green);">[ 🌐 live site ]</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="scan-container">
+      <div class="scan-frame">
+        <div class="corner c-tl"></div>
+        <div class="corner c-tr"></div>
+        <div class="corner c-bl"></div>
+        <div class="corner c-br"></div>
+        <div class="hud-top">FACE_DETECT v2.1 | LIVE FEED</div>
+        <div class="scanline"></div>
+        <svg width="140" height="160" viewBox="0 0 140 160" fill="none" style="opacity:0.45">
+          <circle cx="70" cy="68" r="44" stroke="#00e5ff" stroke-width="1.2" stroke-dasharray="5 3"/>
+          <circle cx="53" cy="60" r="7" stroke="#00e5ff" stroke-width="1.2"/>
+          <circle cx="87" cy="60" r="7" stroke="#00e5ff" stroke-width="1.2"/>
+          <circle cx="53" cy="60" r="2.5" fill="#00e5ff" opacity="0.7"/>
+          <circle cx="87" cy="60" r="2.5" fill="#00e5ff" opacity="0.7"/>
+          <path d="M57 82 Q70 92 83 82" stroke="#00e5ff" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+          <line x1="70" y1="24" x2="70" y2="34" stroke="#00e5ff" stroke-width="0.8" opacity="0.4"/>
+          <line x1="26" y1="68" x2="36" y2="68" stroke="#00e5ff" stroke-width="0.8" opacity="0.4"/>
+          <line x1="104" y1="68" x2="114" y2="68" stroke="#00e5ff" stroke-width="0.8" opacity="0.4"/>
+          <path d="M45 49 Q52 44 60 49" stroke="#00e5ff" stroke-width="0.8" fill="none" opacity="0.5"/>
+          <path d="M80 49 Q88 44 95 49" stroke="#00e5ff" stroke-width="0.8" fill="none" opacity="0.5"/>
+          <circle cx="70" cy="112" r="1.5" fill="#00e5ff" opacity="0.4"/>
+          <circle cx="36" cy="100" r="1.2" fill="#00e5ff" opacity="0.35"/>
+          <circle cx="104" cy="100" r="1.2" fill="#00e5ff" opacity="0.35"/>
+        </svg>
+        <div class="conf-bar"><div class="conf-fill"></div></div>
+        <div class="hud-bottom">● FACE DETECTED — 96.4% CONF</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stats-bar reveal">
+  <div class="stat"><div class="stat-num">4+</div><div class="stat-label">MODULES</div></div>
+  <div class="stat"><div class="stat-num">6</div><div class="stat-label">PIPELINE STEPS</div></div>
+  <div class="stat"><div class="stat-num">96%</div><div class="stat-label">ACCURACY</div></div>
+  <div class="stat"><div class="stat-num">30fps</div><div class="stat-label">REAL-TIME</div></div>
+</div>
+
+<section id="overview">
+  <div class="sec-eyebrow">01 — project_overview</div>
+  <h2>What This <span>System</span> Does</h2>
+  <p class="sec-sub">// real-time detection · visual feedback · extensible architecture</p>
+  <div class="overview-grid reveal">
+    <div class="overview-body">
+      <p>A face detection system built with Python and OpenCV that captures live video through a webcam and identifies human faces in real-time. Each frame is converted to grayscale and processed by OpenCV's Haar Cascade classifier.</p>
+      <p>Detected faces are highlighted with green rectangle overlays — providing immediate visual confirmation. Recognized individuals are labeled with their names displayed above the bounding rectangles.</p>
+      <p>The system establishes a solid foundation for advanced biometric applications using deep learning with CNNs, encoding facial features into vectors for scalable and accurate comparison.</p>
+      <div class="info-block">
+        <div class="info-title">// system_requirements</div>
+        <div class="info-row"><span class="info-key">language</span><span class="info-val">Python 3.x</span></div>
+        <div class="info-row"><span class="info-key">library</span><span class="info-val">OpenCV (cv2)</span></div>
+        <div class="info-row"><span class="info-key">ide</span><span class="info-val">Jupyter Notebook / VS Code</span></div>
+        <div class="info-row"><span class="info-key">hardware</span><span class="info-val">PC/Laptop + Webcam</span></div>
+        <div class="info-row"><span class="info-key">ram</span><span class="info-val">8 GB minimum</span></div>
+      </div>
+    </div>
+    <div class="objectives">
+      <div class="obj-card reveal d1"><h4>🎥 Real-Time Detection</h4><p>Live webcam feed processed frame-by-frame for instant face detection output.</p></div>
+      <div class="obj-card reveal d2"><h4>🔲 Haar Cascade Classifier</h4><p>OpenCV's efficient XML classifier applied on grayscale frames for accuracy.</p></div>
+      <div class="obj-card reveal d3"><h4>🟩 Visual Highlighting</h4><p>Detected faces marked with green rectangles and name labels in live feed.</p></div>
+      <div class="obj-card reveal d3"><h4>🧠 CNN Deep Learning</h4><p>Facial vectors encoded for scalable multi-face recognition via neural networks.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="tech-section" id="tech">
+  <div class="sec-eyebrow">02 — tech_stack</div>
+  <h2>Tools &amp; <span>Technologies</span></h2>
+  <p class="sec-sub">// the stack powering this system</p>
+  <div class="tech-grid">
+    <div class="tech-card reveal"><div class="tech-icon">🐍</div><h3>Python</h3><p>Core language handling all logic, frame processing, and system integration.</p><span class="tech-tag">LANGUAGE</span></div>
+    <div class="tech-card reveal d1"><div class="tech-icon">👁️</div><h3>OpenCV (cv2)</h3><p>Library for video capture, image processing, and face detection algorithms.</p><span class="tech-tag">CV LIBRARY</span></div>
+    <div class="tech-card reveal d2"><div class="tech-icon">📊</div><h3>Haar Cascade XML</h3><p>Pre-trained classifier for efficient and accurate facial region detection.</p><span class="tech-tag">ALGORITHM</span></div>
+    <div class="tech-card reveal d1"><div class="tech-icon">📓</div><h3>Jupyter Notebook</h3><p>Interactive environment for iterative development and experimentation.</p><span class="tech-tag">IDE</span></div>
+    <div class="tech-card reveal d2"><div class="tech-icon">💻</div><h3>VS Code</h3><p>Code editor for structured project development and management.</p><span class="tech-tag">IDE</span></div>
+    <div class="tech-card reveal d3"><div class="tech-icon">🤖</div><h3>CNN / Deep Learning</h3><p>Advanced recognition via convolutional neural networks and vector encoding.</p><span class="tech-tag">AI / ML</span></div>
+  </div>
+</section>
+
+<section class="pipeline-section" id="pipeline">
+  <div class="sec-eyebrow">03 — implementation_pipeline</div>
+  <h2>How It <span>Works</span></h2>
+  <p class="sec-sub">// 6-step execution flow from start to output</p>
+  <div class="pipeline reveal">
+    <div class="pipe-step"><div class="pipe-num">01</div><h4>Import</h4><p>Load cv2 and Haar Cascade XML classifier files</p></div>
+    <div class="pipe-step"><div class="pipe-num">02</div><h4>Webcam</h4><p>Initialize video capture for continuous frame reading</p></div>
+    <div class="pipe-step"><div class="pipe-num">03</div><h4>Preprocess</h4><p>Convert each frame to grayscale for optimal detection</p></div>
+    <div class="pipe-step"><div class="pipe-num">04</div><h4>Detect</h4><p>Run detectMultiScale on processed grayscale frames</p></div>
+    <div class="pipe-step"><div class="pipe-num">05</div><h4>Visualize</h4><p>Draw green rectangles and labels on detected faces</p></div>
+    <div class="pipe-step"><div class="pipe-num">06</div><h4>Exit</h4><p>Key press stops program and releases all resources</p></div>
+  </div>
+</section>
+
+<section class="features-section" id="features">
+  <div class="sec-eyebrow">04 — advanced_features</div>
+  <h2>Advanced <span>Capabilities</span></h2>
+  <p class="sec-sub">// planned upgrades and system extensions</p>
+  <div class="features-grid">
+    <div class="feat-card reveal"><div class="feat-num">// feature_01</div><h4>🪪 Face Recognition Upgrade</h4><p>Identifies specific individuals using a face database with OpenCV Face Recognizer — upgrading from detection to named individual recognition.</p></div>
+    <div class="feat-card reveal d1"><div class="feat-num">// feature_02</div><h4>👥 Multiple Face Tracking</h4><p>Simultaneously tracks multiple faces in a single frame — ideal for classrooms, offices, and group environments.</p></div>
+    <div class="feat-card reveal d2"><div class="feat-num">// feature_03</div><h4>📋 Attendance Automation</h4><p>Automates attendance logging through face records with a simple UI for reviewing, managing, and exporting data.</p></div>
+    <div class="feat-card reveal d3"><div class="feat-num">// feature_04</div><h4>🔐 Security & Privacy</h4><p>Data encryption and user authentication built in to protect all biometric information from unauthorized access.</p></div>
+  </div>
+</section>
+
+<section class="outcomes-section" id="outcomes">
+  <div class="sec-eyebrow">05 — project_outcomes</div>
+  <h2>What Was <span>Achieved</span></h2>
+  <p class="sec-sub">// results and deliverables from this build</p>
+  <div class="outcomes-grid">
+    <div class="outcome-card reveal"><div class="outcome-glyph">✅</div><h3>Real-Time Detection</h3><p>Successfully captures live video, detects faces, and overlays green bounding rectangles in real-time through a responsive display window.</p></div>
+    <div class="outcome-card reveal d1"><div class="outcome-glyph">🏷️</div><h3>Name Recognition</h3><p>Identifies and labels recognized individuals with names displayed above detection rectangles directly in the live video feed.</p></div>
+    <div class="outcome-card reveal d2"><div class="outcome-glyph">🚀</div><h3>Foundation for Growth</h3><p>Establishes a robust base for biometric and security applications — fully extensible with Python, OpenCV, and deep learning.</p></div>
+  </div>
+</section>
+
+<footer>
+  <div>
+    <a href="http://wwww.facerecongition.in/" target="_blank" style="text-decoration:none;"><div class="footer-logo">&lt;<span>FaceRecog</span>/&gt;</div></a>
+    <p style="margin-top:0.4rem;">// python · opencv · haar cascade · cnn</p>
+    <a href="http://wwww.facerecongition.in/" target="_blank" style="font-family:'Fira Code',monospace;font-size:0.7rem;color:var(--cyan);margin-top:0.3rem;display:inline-block;opacity:0.7;text-decoration:none;">🌐 wwww.facerecongition.in</a>
+  </div>
+  <p>// real-time face detection &amp; recognition system</p>
+</footer>
+
+<script>
+// CURSOR
+const cur = document.getElementById('cursor'), ring = document.getElementById('cursorRing');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; cur.style.left=mx+'px'; cur.style.top=my+'px'; });
+function animRing(){ rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(animRing); } animRing();
+document.querySelectorAll('a,button,.tech-card,.feat-card,.obj-card,.outcome-card,.pipe-step,.stat').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{cur.style.width='16px';cur.style.height='16px';ring.style.width='48px';ring.style.height='48px';});
+  el.addEventListener('mouseleave',()=>{cur.style.width='10px';cur.style.height='10px';ring.style.width='32px';ring.style.height='32px';});
+});
+
+// PARTICLES
+const canvas=document.getElementById('particles'), ctx=canvas.getContext('2d');
+let W,H,pts=[];
+function init(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;pts=Array.from({length:70},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.5}));}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  pts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='rgba(0,229,255,0.35)';ctx.fill();});
+  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);if(d<120){ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.strokeStyle=`rgba(0,229,255,${.1*(1-d/120)})`;ctx.lineWidth=.5;ctx.stroke();}}
+  requestAnimationFrame(draw);
+}
+init();draw();window.addEventListener('resize',init);
+
+// SCROLL REVEAL
+const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.08});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+
+// TYPING
+const tags=['// computer_vision_project','// python + opencv','// real_time_detection','// haar_cascade_classifier'];
+let ti=0,ci=0;const tagEl=document.getElementById('heroTag');
+function type(){const t=tags[ti];if(ci<=t.length){tagEl.innerHTML=t.slice(0,ci)+' <span class="blink">_</span>';ci++;setTimeout(type,65);}else{setTimeout(()=>{ti=(ti+1)%tags.length;ci=0;type();},2200);}}
+type();
+</script>
+</body>
+</html>
